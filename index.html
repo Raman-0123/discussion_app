@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discussion App</title>
+  <style>
+    /* Basic Styling */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f0f4f8;
+    }
+
+    .container {
+      display: flex;
+      width: 90%;
+      max-width: 900px;
+      background-color: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .left-pane, .right-pane {
+      padding: 20px;
+    }
+
+    .left-pane {
+      width: 40%;
+      background-color: #f7f9fc;
+      border-right: 1px solid #ddd;
+    }
+
+    .right-pane {
+      width: 60%;
+      background-color: #ffffff;
+    }
+
+    h2 {
+      color: #333;
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .question-list {
+      list-style: none;
+      padding: 0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .question-item {
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+
+    .question-form, .response-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    input[type="text"], textarea {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 10px;
+      font-size: 1em;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .response-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+
+    .response-item {
+      background-color: #f1f1f1;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .resolve-btn {
+      background-color: #28a745;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    .resolve-btn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Left Pane - Question List -->
+    <div class="left-pane">
+      <h2>Questions</h2>
+      <ul id="questionList" class="question-list">
+        <!-- Question items will be added here dynamically -->
+      </ul>
+    </div>
+
+    <!-- Right Pane - Question Form or Responses -->
+    <div class="right-pane">
+      <div id="questionForm">
+        <h2>Ask a Question</h2>
+        <form class="question-form">
+          <input type="text" id="questionTitle" placeholder="Title" required>
+          <textarea id="questionContent" placeholder="Question" required></textarea>
+          <button type="button" onclick="submitQuestion()">Submit Question</button>
+        </form>
+      </div>
+
+      <div id="questionDetail" style="display: none;">
+        <h2 id="displayQuestionTitle">Question Title</h2>
+        <p id="displayQuestionContent">Question Content</p>
+        <button class="resolve-btn" onclick="resolveQuestion()">Resolve</button>
+
+        <div class="response-section">
+          <h3>Responses</h3>
+          <ul id="responseList" class="response-list">
+            <!-- Response items will be added here dynamically -->
+          </ul>
+
+          <h3>Submit a Response</h3>
+          <form class="response-form">
+            <input type="text" id="responderName" placeholder="Your Name" required>
+            <textarea id="responseContent" placeholder="Your Response" required></textarea>
+            <button type="button" onclick="submitResponse()">Submit Response</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript for the Discussion App functionality
+
+    const questionList = document.getElementById("questionList");
+    const questionForm = document.getElementById("questionForm");
+    const questionDetail = document.getElementById("questionDetail");
+
+    const displayQuestionTitle = document.getElementById("displayQuestionTitle");
+    const displayQuestionContent = document.getElementById("displayQuestionContent");
+    const responseList = document.getElementById("responseList");
+
+    let questions = [];
+    let currentQuestionId = null;
+
+    function submitQuestion() {
+      const title = document.getElementById("questionTitle").value.trim();
+      const content = document.getElementById("questionContent").value.trim();
+      if (title && content) {
+        const newQuestion = {
+          id: Date.now(),
+          title,
+          content,
+          responses: []
+        };
+        questions.push(newQuestion);
+        renderQuestions();
+        document.getElementById("questionTitle").value = "";
+        document.getElementById("questionContent").value = "";
+      }
+    }
+
+    function renderQuestions() {
+      questionList.innerHTML = "";
+      questions.forEach(question => {
+        const questionItem = document.createElement("li");
+        questionItem.className = "question-item";
+        questionItem.textContent = question.title;
+        questionItem.onclick = () => openQuestion(question.id);
+        questionList.appendChild(questionItem);
+      });
+    }
+
+    function openQuestion(id) {
+      currentQuestionId = id;
+      const question = questions.find(q => q.id === id);
+      displayQuestionTitle.textContent = question.title;
+      displayQuestionContent.textContent = question.content;
+      renderResponses(question.responses);
+      questionForm.style.display = "none";
+      questionDetail.style.display = "block";
+    }
+
+    function renderResponses(responses) {
+      responseList.innerHTML = "";
+      responses.forEach(response => {
+        const responseItem = document.createElement("li");
+        responseItem.className = "response-item";
+        responseItem.innerHTML = `<strong>${response.name}:</strong> ${response.comment}`;
+        responseList.appendChild(responseItem);
+      });
+    }
+
+    function submitResponse() {
+      const name = document.getElementById("responderName").value.trim();
+      const comment = document.getElementById("responseContent").value.trim();
+      if (name && comment && currentQuestionId !== null) {
+        const question = questions.find(q => q.id === currentQuestionId);
+        question.responses.push({ name, comment });
+        renderResponses(question.responses);
+        document.getElementById("responderName").value = "";
+        document.getElementById("responseContent").value = "";
+      }
+    }
+
+    function resolveQuestion() {
+      questions = questions.filter(q => q.id !== currentQuestionId);
+      renderQuestions();
+      questionForm.style.display = "block";
+      questionDetail.style.display = "none";
+    }
+  </script>
+
+</body>
+</html>
